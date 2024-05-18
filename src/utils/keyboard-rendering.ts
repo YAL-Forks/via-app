@@ -13,6 +13,7 @@ import {
   getLabelForByte,
   getShortNameForKeycode,
   getCustomKeycodeIndex,
+  keycodesList,
   IKeycode,
   isAlpha,
   isNumpadNumber,
@@ -23,6 +24,9 @@ import {
   isMacroKeycodeByte,
   getMacroKeycodeIndex,
 } from './key';
+import {
+  modifierKeyToValue
+} from './advanced-keys'
 
 export const CSSVarObject = {
   keyWidth: 52,
@@ -501,7 +505,123 @@ export const getLabel = (
         offset: offset,
       }
     );
-  } else if (isMultiLegend(label)) {
+  }
+  
+  // tools
+  const getShortNameForKC = (code:string) => {
+    const basicKeycode = keycodesList.find(item => item.code == code);
+    if (basicKeycode) return getShortNameForKeycode(basicKeycode);
+    return code;
+  };
+  const isModFunc = (name:string) => {
+    const mk2v:Record<string, number> = modifierKeyToValue;
+    return mk2v[name] != null;
+  }
+  const modFuncToShortName = (name:string) => {
+    switch (name) {
+      case "RSFT": return "RS";
+      case "RCTL": return "RC";
+      case "RALT": return "RA";
+      case "RGUI": return "RG";
+      default: return name;
+    }
+  }
+  const modFuncToLongName = (name:string) => {
+    switch (name) {
+      case "S": return "LSft";
+      case "C": return "LCtl";
+      case "A": return "LAlt";
+      case "G": return "LGui";
+    }
+    switch (name[0]) {
+      case "L": case "R":
+        return name.slice(0, 2) + name.slice(2).toLowerCase();
+      default: return name;
+    }
+  }
+  const topBottomSize = 13/16;
+  let mt;
+  // OSM
+  if (mt = /^OSM\(MOD_(\w+)\)$/.exec(label)) {
+    const topLabel = "OSM";
+    const bottomLabel = modFuncToLongName(mt[1]);
+    return {
+      topBottomSize,
+      topLabel,
+      bottomLabel,
+      tooltipLabel,
+      macroExpression,
+      key: (label || '') + (macroExpression || ''),
+      size: 1,
+      offset: getLabelOffsets(topLabel, bottomLabel),
+    }
+  }
+  // tap-holds
+  if (mt = /^LT\((\d+),(.+)\)$/.exec(label)) {
+    let topLabel = getShortNameForKC(mt[2]);
+    const bottomLabel = "MO(" + mt[1] + ")";
+    return {
+      topBottomSize,
+      topLabel,
+      bottomLabel,
+      tooltipLabel,
+      macroExpression,
+      key: (label || '') + (macroExpression || ''),
+      size: 1,
+      offset: getLabelOffsets(topLabel, bottomLabel),
+    }
+  }
+  if (mt = /^MT\((.+?),(.+)\)$/.exec(label)) {
+    let mod;
+    switch (mt[1]) {
+      case "MOD_LALT | MOD_RALT": mod = "Alt"; break;
+      case "MOD_LSFT | MOD_RSFT": mod = "Sft"; break;
+      case "MOD_LCTL | MOD_RCTL": mod = "Ctl"; break;
+      case "MOD_LGUI | MOD_RGUI": mod = "Gui"; break;
+      default: mod = null; break;
+    }
+    if (mod) {
+      let topLabel = getShortNameForKC(mt[2]);
+      let bottomLabel = mod;
+      return {
+        topBottomSize,
+        topLabel, bottomLabel,
+        tooltipLabel, macroExpression,
+        key: (label || '') + (macroExpression || ''),
+        size: size,
+        offset: getLabelOffsets(topLabel, bottomLabel),
+      }
+    }
+  }
+  // modifiers
+  
+  let modKeys = [];
+  let modRx = /^(\w+)\((.+)\)$/; // "LCTL(KC_ENTER)" -> ["LCTL", "KC_ENTER"]
+  let modLabel = label;
+  for (let i = 0; i < 4; i++) {
+    if (mt = modRx.exec(modLabel)) {
+      if (!isModFunc(mt[1])) break;
+      modKeys.push(mt[1]);
+      modLabel = mt[2];
+    } else break;
+  }
+  if (modKeys.length > 0) {
+    let topLabel = (modKeys.length == 1
+      ? modFuncToLongName(modKeys[0])
+      : modKeys.map(modFuncToShortName).join("")
+    );
+    let bottomLabel = "+" + getShortNameForKC(modLabel);
+    return {
+      topBottomSize,
+      topLabel, bottomLabel,
+      tooltipLabel, macroExpression,
+      key: (label || '') + (macroExpression || ''),
+      size: size,
+      offset: getLabelOffsets(topLabel, bottomLabel),
+    }
+  }
+  //
+  if (isMultiLegend(label)) {
     const topLabel = label[0];
     const bottomLabel = label[label.length - 1];
     return (

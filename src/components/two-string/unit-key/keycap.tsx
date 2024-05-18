@@ -85,7 +85,7 @@ const paintKeycapLabel = (
   context.fillStyle = legendColor;
   if (label === undefined) {
   } else if (label.topLabel && label.bottomLabel) {
-    let fontSize = 16;
+    let fontSize = 16 * (label.topBottomSize ?? 1);
     let fontHeight = 0.75 * fontSize;
     let topLabelOffset = label.offset[0] * fontHeight;
     let bottomLabelOffset = label.offset[1] * fontHeight;

@@ -64,7 +64,7 @@ const modMasks = {
   MOD_MEH: 0x0007,
 };
 
-const topLevelMacroToValue = {
+export const topLevelMacroToValue = {
   MT: '_QK_MOD_TAP', // MT(mod, kc)
   LT: '_QK_LAYER_TAP', // LT(layer, kc)
   LM: '_QK_LAYER_MOD', // LM(layer, mod)
@@ -79,7 +79,7 @@ const topLevelMacroToValue = {
   MACRO: '_QK_MACRO', // MACRO(n)
 };
 
-const modifierKeyToValue = {
+export const modifierKeyToValue = {
   LCTL: modCodes.QK_LCTL,
   C: modCodes.QK_LCTL,
   LSFT: modCodes.QK_LSFT,
